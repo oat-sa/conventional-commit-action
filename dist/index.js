@@ -9,7 +9,17 @@ const core = __webpack_require__(186);
 const github = __webpack_require__(438);
 
 async function main() {
-    const token = core.getInput('github-token');
+    const token = core.getInput('github_token');
+
+    if(token && token.length){
+       core.info('got the token');
+        console.log('GOT THE TOKEN');
+    } else {
+
+       core.info('the token is empty');
+        console.log('EMPTY TOKEN');
+
+    }
     const octokit = github.getOctokit(token);
     console.log("CONTEXT", JSON.stringify(context));
 
