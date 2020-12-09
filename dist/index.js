@@ -12,15 +12,6 @@ async function main() {
     const token = core.getInput('github_token');
     const context = github.context;
 
-    if(token && token.length){
-       core.info('got the token');
-        console.log('GOT THE TOKEN');
-    } else {
-
-       core.info('the token is empty');
-        console.log('EMPTY TOKEN');
-
-    }
     const octokit = github.getOctokit(token);
     console.log("CONTEXT", JSON.stringify(context));
 
@@ -28,7 +19,7 @@ async function main() {
 		repo: context.repo.repo,
 		owner: context.repo.owner,
 		issue_number: context.payload.pull_request.number,
-		body: 'New version',
+		body: 'Hey 👋, this is Bertrand. I\'m testing some github action on this repo. No worry your PR is awesome !',
 	})
 }
 
