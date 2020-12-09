@@ -1,0 +1,10 @@
+name: 'OAT Conventional Commit'
+author: 'Open Assessment Technologies SA'
+description: 'Detect and parse conventional commits'
+inputs:
+  github-token:
+    description: 'Github token'
+    required: true
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
