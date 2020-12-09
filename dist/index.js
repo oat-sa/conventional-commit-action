@@ -6,14 +6,14 @@ module.exports =
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 const core = __webpack_require__(186);
-const { GitHub, context } = __webpack_require__(438);
+const github = __webpack_require__(438);
 
 async function main() {
-    const token = core.getInput('token');
+    const token = core.getInput('github-token');
+    const octokit = github.getOctokit(token);
+    console.log("CONTEXT", JSON.stringify(context));
 
-    console.log(JSON.stringify(context));
-
-    await new GitHub(token).issues.createComment({
+    await octokit.issues.createComment({
 		repo: context.repo.repo,
 		owner: context.repo.owner,
 		issue_number: context.payload.pull_request.number,
