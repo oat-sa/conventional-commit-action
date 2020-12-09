@@ -10,6 +10,7 @@ const github = __webpack_require__(438);
 
 async function main() {
     const token = core.getInput('github_token');
+    const context = github.context;
 
     if(token && token.length){
        core.info('got the token');
