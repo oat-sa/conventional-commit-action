@@ -34,7 +34,7 @@ async function getVersion() {
     return new Promise((resolve, reject) => {
         conventionalRecommendedBump(
             {
-                preset: conventionalPresetConfig
+                config: conventionalPresetConfig    //the preset cannot be used from string in an action due to missing lookups in node_modules
             },
             {},
             (err, recommendation) => {
