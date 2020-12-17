@@ -44,11 +44,7 @@ async function getVersion() {
                     return reject(err);
                 }
 
-                const lastVersion = lastVersionObject.version;
-
-                //carefull inc mutate lastVersionObject
-                const version = semverInc(lastVersionObject, recommendation.releaseType);
-                resolve({ lastVersion, version, recommendation });
+                resolve(recommendation);
             });
     });
 }
