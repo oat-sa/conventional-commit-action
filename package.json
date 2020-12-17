@@ -21,6 +21,8 @@
     "@actions/github": "^4.0.0"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.25.1"
+    "@oat-sa/conventional-changelog-tao": "^0.1.0",
+    "@vercel/ncc": "^0.25.1",
+    "conventional-recommended-bump": "^6.0.11"
   }
 }
