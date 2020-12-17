@@ -27,9 +27,7 @@ async function getVersion() {
     return new Promise((resolve, reject) => {
         conventionalRecommendedBump(
             {
-                preset: {
-                    name: '@oat-sa/tao'
-                }
+                preset: conventionalPresetConfig
             },
             {},
             (err, recommendation) => {
