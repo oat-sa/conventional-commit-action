@@ -34,7 +34,7 @@ async function main() {
 		repo: context.repo.repo,
 		owner: context.repo.owner,
 		issue_number: context.payload.pull_request.number,
-		body: getMessage(recommendation, version)
+		body: getMessage(recommendation, version, lastVersion)
 	})
 }
 
