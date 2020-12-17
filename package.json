@@ -23,6 +23,8 @@
   "devDependencies": {
     "@oat-sa/conventional-changelog-tao": "^0.1.0",
     "@vercel/ncc": "^0.25.1",
-    "conventional-recommended-bump": "^6.0.11"
+    "conventional-recommended-bump": "^6.0.11",
+    "git-semver-tags": "^4.1.1",
+    "semver": "^7.3.4"
   }
 }
