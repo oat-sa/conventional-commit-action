@@ -19,7 +19,7 @@ async function main() {
     const context = github.context;
 
     const octokit = github.getOctokit(token);
-    const recommendation = await getVersion();
+    const recommendation = await getRecommandation();
     const lastTag = await getLastTag();
 
     let lastVersion;
@@ -32,6 +32,10 @@ async function main() {
 
     console.log('recommendation', recommendation);
     console.log('lastTag', lastTag);
+    console.log('version', version);
+    console.log('last version', lastVersion);
+
+
 
     await octokit.issues.createComment({
 		repo: context.repo.repo,
