@@ -58,7 +58,7 @@ async function getRecommandation(){
                     return reject(err);
                 }
 
-                resolve(recommendation, lastVersion, version);
+                resolve(recommendation);
             });
     });
 }
