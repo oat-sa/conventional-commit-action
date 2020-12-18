@@ -29,13 +29,12 @@ async function main() {
     console.log('last version', lastVersion);
 
 
-
-    await octokit.issues.createComment({
-		repo: context.repo.repo,
-		owner: context.repo.owner,
-		issue_number: context.payload.pull_request.number,
-		body: getMessage(recommendation, version, lastVersion)
-	})
+    if(stats.commits > 0 && stats.commits === stats.unset){
+        await postComment(context, '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!');
+        throw new Error('The commits messages are not compliant');
+    } else {
+        await postComment(context, getMessage(recommendation, lastVersion, version))
+    }
 }
 
 
@@ -70,24 +69,32 @@ async function getLastTag() {
     });
 }
 
-function getMessage({ stats, releaseType, reason } = recommendation, lastVersion, version) {
-    if(stats.commits > 0 && stats.commits === stats.unset){
-        return 'The commits are not compliant with the conventional commits format!';
+function getMessage({ stats, level, reason } = recommendation, lastVersion, version) {
+
+    let message = ['### Expexted version'];
+    if(level === 0) {
+        message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it');
     }
-    let message = [];
     if (stats.unset > 0 ) {
-        message.push(`${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`);
+        message.push(`❕ ${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`);
     }
-    message.push(
-        ` - last version: ${lastVersion}`
-    );
-    message.push(
-        ` - target version: **${version}**`
-    );
-    message.push(
-        reason
-    );
+    message.push(`
+        | Last version | ${lastVersion} |
+        | Target version | **${version}** |
+    `);
+    message.push(`> ${reason}`);
     return message.join('\n');
+}
+
+async function postComment(context, comment) {
+    return octokit.issues.createComment({
+		repo: context.repo.repo,
+		owner: context.repo.owner,
+		issue_number: context.payload.pull_request.number,
+		body: `<!--OAT-cc-action-->
+		    ${comment}
+		`
+	})
 }
 
 main().catch(err => core.setFailed(err.message) );
