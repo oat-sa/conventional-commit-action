@@ -29,7 +29,7 @@ async function main() {
     console.log('last version', lastVersion);
 
 
-    if(stats.commits > 0 && stats.commits === stats.unset){
+    if(recommendation && recommendation.stats.commits > 0 && recommendation.stats.commits === recommendation.stats.unset){
         await postComment(context, '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!');
         throw new Error('The commits messages are not compliant');
     } else {
