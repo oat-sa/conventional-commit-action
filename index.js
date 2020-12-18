@@ -79,8 +79,9 @@ function getMessage({ stats, level, reason } = recommendation, lastVersion, vers
         message.push(`❕ ${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`);
     }
     message.push(`
-        | Last version | ${lastVersion} |
-        | Target version | **${version}** |
+        | Target Version | ${version} |
+        | -------------- | ---------- |
+        | Last version   | ${lastVersion} |
     `);
     message.push(`> ${reason}`);
     return message.join('\n');
