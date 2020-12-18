@@ -78,7 +78,7 @@ async function getLastTag() {
 
 function getMessage({ stats, level, reason } = recommendation, lastVersion, version) {
 
-    let message = ['### Expexted version'];
+    let message = ['### Version'];
     if(level === 0) {
         message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it');
     }
@@ -86,11 +86,11 @@ function getMessage({ stats, level, reason } = recommendation, lastVersion, vers
         message.push(`❕ ${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`);
     }
     message.push(`
-        | Target Version | ${version} |
-        | -------------- | ---------- |
-        | Last version   | ${lastVersion} |
+| Target Version | ${version} |
+| -------------- | ---------- |
+| Last version   | ${lastVersion} |
     `);
-    message.push(`> ${reason}`);
+    message.push(`${reason}`);
     return message.join('\n');
 }
 
@@ -99,9 +99,7 @@ async function postComment(octokit, context, comment) {
 		repo: context.repo.repo,
 		owner: context.repo.owner,
 		issue_number: context.payload.pull_request.number,
-		body: `<!--OAT-cc-action-->
-		    ${comment}
-		`
+		body: `<!--OAT-cc-action-->\n${comment}`
 	})
 }
 
