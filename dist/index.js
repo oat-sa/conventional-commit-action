@@ -37,10 +37,10 @@ async function main() {
 
 
     if(recommendation && recommendation.stats.commits > 0 && recommendation.stats.commits === recommendation.stats.unset){
-        await postComment(context, '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!');
+        await postComment(octokit, context, '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!');
         throw new Error('The commits messages are not compliant');
     } else {
-        await postComment(context, getMessage(recommendation, lastVersion, version))
+        await postComment(octokit, context, getMessage(recommendation, lastVersion, version))
     }
 }
 
@@ -94,7 +94,7 @@ function getMessage({ stats, level, reason } = recommendation, lastVersion, vers
     return message.join('\n');
 }
 
-async function postComment(context, comment) {
+async function postComment(octokit, context, comment) {
     return octokit.issues.createComment({
 		repo: context.repo.repo,
 		owner: context.repo.owner,
