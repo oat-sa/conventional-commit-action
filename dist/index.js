@@ -53,6 +53,8 @@ function main() {
             core.setOutput('version', version);
         }
 
+        core.info(recommendation);
+
         if (
             recommendation.stats &&
             recommendation.stats.commits > 0 &&
@@ -127,7 +129,7 @@ function getMessage({ stats, level, reason } = {}, lastVersion, version) {
     }
     if (stats.unset > 0) {
         message.push(
-            `❕ ${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`
+            `❕ Some commits are not using the conventional commits formats. They will be ignored in version management.`
         );
     }
     message.push(`
