@@ -6,6 +6,18 @@ The action will :
  - Fail pull request with no conventional commits
  - Post a comment with the target version number based on pull request commits
 
+## Inputs
+
+### `github_token`
+
+**Required** A token with permissions to read/write in the PR.
+
+## Outputs
+
+### `version`
+
+The version number expected from the commits.
+
 ## Usage
 
 This action expects to run on a git repo, that contains the last tags. 

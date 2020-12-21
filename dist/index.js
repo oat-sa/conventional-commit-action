@@ -50,6 +50,7 @@ function main() {
             const lastVersionObject = semverParse(lastTag);
             lastVersion = lastVersionObject.version;
             version = semverInc(lastVersionObject, recommendation.releaseType);
+            core.setOutput('version', version);
         }
 
         if (
@@ -146,6 +147,10 @@ function getMessage({ stats, level, reason } = {}, lastVersion, version) {
  * @returns {Promise}
  */
 function postComment(octokit, context, comment) {
+
+    //there's no API to update a comment, so we
+    //keep track of comments by inserting an hidden comment
+    //and removing the previous
     const commentHeader = '<!--OAT-cc-action-->';
 
     return octokit.issues
@@ -160,17 +165,15 @@ function postComment(octokit, context, comment) {
             return existingComments.filter(({ body }) => body.startsWith(commentHeader));
         })
         .then(toDelete => {
-            console.log('To delete', toDelete);
             if (Array.isArray(toDelete)) {
                 return Promise.all(
-                    toDelete.map(({ id }) => {
-                        console.log('deleting ', id);
+                    toDelete.map(({ id }) => (
                         octokit.issues.deleteComment({
                             repo: context.repo.repo,
                             owner: context.repo.owner,
                             comment_id: id
-                        });
-                    })
+                        })
+                    ))
                 );
             }
         })
