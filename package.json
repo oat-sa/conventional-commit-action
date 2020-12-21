@@ -4,7 +4,7 @@
   "description": "Github action to detect and parse conventional commits",
   "main": "index.js",
   "scripts": {
-    "build": "ncc -m -s build index",
+    "build": "ncc build index",
     "lint": "eslint index.js"
   },
   "repository": {

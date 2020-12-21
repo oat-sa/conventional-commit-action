@@ -1,3 +1,20 @@
+/**
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; under version 2
+ * of the License (non-upgradable).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * Copyright (c) 2020 (original work) Open Assessment Technologies SA ;
+ */
 const core = require('@actions/core');
 const github = require('@actions/github');
 const conventionalRecommendedBump = require('conventional-recommended-bump');
@@ -6,44 +23,54 @@ const gitSemverTags = require('git-semver-tags');
 const semverParse = require('semver/functions/parse');
 const semverInc = require('semver/functions/inc');
 
-
-async function main() {
+/**
+ * The main entry point
+ * @returns {Promise}
+ */
+function main() {
     const token = core.getInput('github_token');
     const context = github.context;
-
     const octokit = github.getOctokit(token);
-    const recommendation = await getRecommandation();
-    const lastTag = await getLastTag();
 
-    let lastVersion;
-    let version;
-    if( lastTag && recommendation ){
-        const lastVersionObject = semverParse(lastTag);
-        lastVersion = lastVersionObject.version;
-        version = semverInc(lastVersionObject, recommendation.releaseType);
-    }
+    return Promise.all([getRecommandation(), getLastTag()]).then(([recommendation, lastTag] = []) => {
+        if (!recommendation || !lastTag) {
+            throw new Error('Unable to retrieve commits and tag information');
+        }
 
-    console.log('recommendation', recommendation);
-    console.log('lastTag', lastTag);
-    console.log('version', version);
-    console.log('last version', lastVersion);
+        let lastVersion;
+        let version;
+        if (lastTag && recommendation) {
+            const lastVersionObject = semverParse(lastTag);
+            lastVersion = lastVersionObject.version;
+            version = semverInc(lastVersionObject, recommendation.releaseType);
+        }
 
-
-    if(recommendation && recommendation.stats.commits > 0 && recommendation.stats.commits === recommendation.stats.unset){
-        await postComment(octokit, context, '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!');
-        throw new Error('The commits messages are not compliant');
-    } else {
-        await postComment(octokit, context, getMessage(recommendation, lastVersion, version))
-    }
+        if (
+            recommendation.stats &&
+            recommendation.stats.commits > 0 &&
+            recommendation.stats.commits === recommendation.stats.unset
+        ) {
+            return postComment(
+                octokit,
+                context,
+                '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
+            ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
+        }
+        return postComment(octokit, context, getMessage(recommendation, lastVersion, version));
+    });
 }
 
-
-async function getRecommandation(){
+/**
+ * Get commit recommendation
+ * @returns {Promise<Object>} resolves with the recommendation object
+ */
+function getRecommandation() {
     return new Promise((resolve, reject) => {
         conventionalRecommendedBump(
             {
                 //the preset cannot be used from string in an action due to missing lookups in node_modules
-                config: conventionalPresetConfig                },
+                config: conventionalPresetConfig
+            },
             {},
             (err, recommendation) => {
                 if (err) {
@@ -51,12 +78,18 @@ async function getRecommandation(){
                 }
 
                 resolve(recommendation);
-            });
+            }
+        );
     });
 }
 
-async function getLastTag() {
-    return new Promise( (resolve, reject) => {
+/**
+ * Get the last tag,
+ * it expects the local git to have the tags fetched
+ * @returns {Promise<Object>} resolves with the tag version object
+ */
+function getLastTag() {
+    return new Promise((resolve, reject) => {
         gitSemverTags((err, tags) => {
             if (err) {
                 return reject(err);
@@ -69,14 +102,25 @@ async function getLastTag() {
     });
 }
 
-function getMessage({ stats, level, reason } = recommendation, lastVersion, version) {
-
+/**
+ * Build the comment message
+ * @param {Object} recommendation
+ * @param {Object} recommendation.stats
+ * @param {number} recommendation.level
+ * @param {string} recommendation.reason
+ * @param {string} lastVersion
+ * @param {string} version
+ * @returns {string} the message, in markdown format
+ */
+function getMessage({ stats, level, reason } = {}, lastVersion, version) {
     let message = ['### Version'];
-    if(level === 0) {
+    if (level === 0) {
         message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it');
     }
-    if (stats.unset > 0 ) {
-        message.push(`❕ ${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`);
+    if (stats.unset > 0) {
+        message.push(
+            `❕ ${stats.unset} commits are not using the conventional commits formats. They will be ignored in version management.`
+        );
     }
     message.push(`
 | Target Version | ${version} |
@@ -87,13 +131,20 @@ function getMessage({ stats, level, reason } = recommendation, lastVersion, vers
     return message.join('\n');
 }
 
-async function postComment(octokit, context, comment) {
+/**
+ * Post a comment to the PR
+ * @param {Object} octokit
+ * @param {Object} context
+ * @param {string} comment
+ * @returns {Promise}
+ */
+function postComment(octokit, context, comment) {
     return octokit.issues.createComment({
-		repo: context.repo.repo,
-		owner: context.repo.owner,
-		issue_number: context.payload.pull_request.number,
-		body: `<!--OAT-cc-action-->\n${comment}`
-	})
+        repo: context.repo.repo,
+        owner: context.repo.owner,
+        issue_number: context.payload.pull_request.number,
+        body: `<!--OAT-cc-action-->\n${comment}`
+    });
 }
 
-main().catch(err => core.setFailed(err.message) );
+main().catch(err => core.setFailed(err.message));
