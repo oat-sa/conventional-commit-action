@@ -160,14 +160,16 @@ function postComment(octokit, context, comment) {
             return existingComments.filter(({ body }) => body.startsWith(commentHeader));
         })
         .then(toDelete => {
+            console.log('To delete', toDelete);
             if (Array.isArray(toDelete)) {
                 return Promise.all(
-                    toDelete.map(({ id }) => (
+                    toDelete.map(({ id }) => {
+                        console.log('deleting ', id);
                         octokit.issues.deleteComment({
                             repo: context.repo.repo,
                             comment_id: id
-                        })
-                    ))
+                        });
+                    })
                 );
             }
         })
