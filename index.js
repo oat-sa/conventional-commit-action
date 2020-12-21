@@ -160,6 +160,7 @@ function postComment(octokit, context, comment) {
                         console.log('deleting ', id);
                         octokit.issues.deleteComment({
                             repo: context.repo.repo,
+                            owner: context.repo.owner,
                             comment_id: id
                         });
                     })
