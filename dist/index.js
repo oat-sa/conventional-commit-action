@@ -61,8 +61,7 @@ function main() {
                 octokit,
                 context,
                 '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
-            )
-            .then(() => Promise.reject(new Error('The commits messages are not compliant')));
+            ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
         }
         return postComment(octokit, context, getMessage(recommendation, lastVersion, version));
     });
@@ -149,25 +148,37 @@ function getMessage({ stats, level, reason } = {}, lastVersion, version) {
 function postComment(octokit, context, comment) {
     const commentHeader = '<!--OAT-cc-action-->';
 
-    return octokit.issues.listComments({
-        repo: context.repo.repo,
-        owner: context.repo.owner,
-        issue_number: context.payload.pull_request.number
-    })
-    .then( results => {
-        const { data: existingComments } = results;
+    return octokit.issues
+        .listComments({
+            repo: context.repo.repo,
+            owner: context.repo.owner,
+            issue_number: context.payload.pull_request.number
+        })
+        .then(results => {
+            const { data: existingComments } = results;
 
-        return existingComments.filter(({ body }) => body.startsWith(commentHeader));
-    })
-    .then( toDelete => {
-        console.log('comments to delete', toDelete);
-    })
-    .then( () => octokit.issues.createComment({
-        repo: context.repo.repo,
-        owner: context.repo.owner,
-        issue_number: context.payload.pull_request.number,
-        body: `${commentHeader}\n${comment}`
-    }));
+            return existingComments.filter(({ body }) => body.startsWith(commentHeader));
+        })
+        .then(toDelete => {
+            if (Array.isArray(toDelete)) {
+                return Promise.all(
+                    toDelete.map(({ id }) => (
+                        octokit.issues.deleteComment({
+                            repo: context.repo.repo,
+                            comment_id: id
+                        })
+                    ))
+                );
+            }
+        })
+        .then(() => (
+            octokit.issues.createComment({
+                repo: context.repo.repo,
+                owner: context.repo.owner,
+                issue_number: context.payload.pull_request.number,
+                body: `${commentHeader}\n${comment}`
+            })
+        ));
 }
 
 main().catch(err => core.setFailed(err.message));
