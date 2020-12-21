@@ -53,7 +53,7 @@ function main() {
             core.setOutput('version', version);
         }
 
-        core.info(recommendation);
+        core.info(JSON.stringify(recommendation, null, ' '));
 
         if (
             recommendation.stats &&
@@ -1445,6 +1445,7 @@ module.exports = function bumper(config = {}) {
              * @returns {Object} with the level and the reason
              */
             whatBump(commits) {
+                console.log(commits);
 
                 //Levels are '2' for fix, '1' for feature, '0' for breaking
                 let level = 2;

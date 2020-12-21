@@ -46,7 +46,7 @@ function main() {
             core.setOutput('version', version);
         }
 
-        core.info(recommendation);
+        core.info(JSON.stringify(recommendation, null, ' '));
 
         if (
             recommendation.stats &&
