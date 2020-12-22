@@ -12,7 +12,7 @@
     "url": "git+https://github.com/oat-sa/conventional-commit-action.git"
   },
   "author": "",
-  "license": "MIT",
+  "license": "GPL-2.0",
   "bugs": {
     "url": "https://github.com/oat-sa/conventional-commit-action/issues"
   },

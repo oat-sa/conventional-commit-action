@@ -1445,7 +1445,6 @@ module.exports = function bumper(config = {}) {
              * @returns {Object} with the level and the reason
              */
             whatBump(commits) {
-                console.log(commits);
 
                 //Levels are '2' for fix, '1' for feature, '0' for breaking
                 let level = 2;
@@ -1611,7 +1610,7 @@ module.exports = function parser(config = {}) {
         revertPattern: /^(?:Revert|revert:)\s"?([\s\S]+?)"?\s*This reverts commit (\w*)\./i,
         revertCorrespondence: ['header', 'hash'],
         issuePrefixes: ['#'],
-        mergePattern: /^Merge (?:(?:.*)?branch(?:es)? (.*) into (.*)|pull request #(\d+) from (.*))$/i,
+        mergePattern: /^Merge (?:(?:.*)?branch(?:es)? (.*) into (.*)|pull request #(\d+) from (.*)|(.*) into (.*))$/i,
         mergeCorrespondence: ['source', 'destination', 'id', 'source']
     }, config);
 };
