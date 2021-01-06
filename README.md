@@ -56,3 +56,11 @@ Build :
 ```sh
 npm run build
 ```
+
+## Publishing
+
+Actions are released as tags: 
+ - one tag that reflects the exact version
+ - a major version tag that points to the last tag of that version
+
+ For example, when releasing the version `v1.2.3`, ensure the tag `v1` points to that version as well.
