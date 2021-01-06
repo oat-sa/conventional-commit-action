@@ -48,11 +48,10 @@ function main() {
 
         core.info(JSON.stringify(recommendation, null, ' '));
 
-        //there's always 1 merge commit
         if (
             recommendation.stats &&
             recommendation.stats.commits > 0 &&
-            (recommendation.stats.commits - 1) === recommendation.stats.unset
+            recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
         ) {
             return postComment(
                 octokit,
@@ -143,7 +142,6 @@ function getMessage({ stats, level, reason } = {}, lastVersion, version) {
  * @returns {Promise}
  */
 function postComment(octokit, context, comment) {
-
     //there's no API to update a comment, so we
     //keep track of comments by inserting an hidden comment
     //and removing the previous
@@ -163,24 +161,24 @@ function postComment(octokit, context, comment) {
         .then(toDelete => {
             if (Array.isArray(toDelete)) {
                 return Promise.all(
-                    toDelete.map(({ id }) => (
+                    toDelete.map(({ id }) =>
                         octokit.issues.deleteComment({
                             repo: context.repo.repo,
                             owner: context.repo.owner,
                             comment_id: id
                         })
-                    ))
+                    )
                 );
             }
         })
-        .then(() => (
+        .then(() =>
             octokit.issues.createComment({
                 repo: context.repo.repo,
                 owner: context.repo.owner,
                 issue_number: context.payload.pull_request.number,
                 body: `${commentHeader}\n${comment}`
             })
-        ));
+        );
 }
 
 main().catch(err => core.setFailed(err.message));

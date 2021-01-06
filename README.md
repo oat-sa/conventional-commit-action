@@ -38,7 +38,7 @@ jobs:
     - run: git fetch --unshallow --tags
     - name: Check commit
       if: always()
-      uses: oat-sa/conventional-commit-action@main
+      uses: oat-sa/conventional-commit-action@latest
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
