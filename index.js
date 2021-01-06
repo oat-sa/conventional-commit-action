@@ -48,10 +48,11 @@ function main() {
 
         core.info(JSON.stringify(recommendation, null, ' '));
 
+        //there's always 1 merge commit
         if (
             recommendation.stats &&
             recommendation.stats.commits > 0 &&
-            recommendation.stats.commits === recommendation.stats.unset
+            (recommendation.stats.commits - 1) === recommendation.stats.unset
         ) {
             return postComment(
                 octokit,
