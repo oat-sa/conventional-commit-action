@@ -39,10 +39,10 @@ function main() {
             owner: context.repo.owner,
             pull_number: context.payload.pull_request.number
         })
-        .then(commits => {
-            console.log(commits);
-            return Promise.all([getRecommandation(commits), getLastTag()]);
-        })
+        .then(({ data: commits }) => Promise.all([
+            getRecommandation(commits.map(commit => commit.sha)),
+            getLastTag()
+        ]))
         .then(([recommendation, lastTag] = []) => {
             if (!recommendation || !lastTag) {
                 throw new Error('Unable to retrieve commits and tag information');
@@ -78,17 +78,14 @@ function main() {
  * Get commit recommendation
  * @returns {Promise<Object>} resolves with the recommendation object
  */
-function getRecommandation(pullRequestCommits) {
+function getRecommandation(includeCommits) {
     return new Promise((resolve, reject) => {
         conventionalRecommendedBump(
             {
                 //the preset cannot be used from string in an action due to missing lookups in node_modules
                 config: conventionalPresetConfig,
-                whatBump(commits, options) {
-                    console.log('WHAT BUMP', commits, options);
-                    //filter out commits
-
-                    return presetBumper(options).whatBump(commits);
+                whatBump(commits) {
+                    return presetBumper().whatBump(commits.filter( commit => includeCommits.includes(commit.hash)));
                 }
             },
             (err, recommendation) => {
