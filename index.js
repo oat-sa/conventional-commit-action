@@ -76,6 +76,7 @@ function main() {
 
 /**
  * Get commit recommendation
+ * @param {String[]]} includeCommits - the list of commits to include
  * @returns {Promise<Object>} resolves with the recommendation object
  */
 function getRecommandation(includeCommits) {
@@ -174,23 +175,23 @@ function postComment(octokit, context, comment) {
         .then(toDelete => {
             if (Array.isArray(toDelete)) {
                 return Promise.all(
-                    toDelete.map(({ id }) =>
+                    toDelete.map(({ id }) => (
                         octokit.issues.deleteComment({
                             repo: context.repo.repo,
                             owner: context.repo.owner,
                             comment_id: id
                         })
-                    )
+                    ))
                 );
             }
         })
-        .then(() =>
+        .then(() => (
             octokit.issues.createComment({
                 repo: context.repo.repo,
                 owner: context.repo.owner,
                 issue_number: context.payload.pull_request.number,
                 body: `${commentHeader}\n${comment}`
-            })
+            }))
         );
 }
 
