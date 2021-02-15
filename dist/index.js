@@ -26,6 +26,7 @@ const core = __webpack_require__(2186);
 const github = __webpack_require__(5438);
 const conventionalRecommendedBump = __webpack_require__(7011);
 const conventionalPresetConfig = __webpack_require__(9061);
+const presetBumper = __webpack_require__(4372);
 const gitSemverTags = __webpack_require__(2408);
 const semverParse = __webpack_require__(5925);
 const semverInc = __webpack_require__(900);
@@ -39,49 +40,62 @@ function main() {
     const context = github.context;
     const octokit = github.getOctokit(token);
 
-    return Promise.all([getRecommandation(), getLastTag()]).then(([recommendation, lastTag] = []) => {
-        if (!recommendation || !lastTag) {
-            throw new Error('Unable to retrieve commits and tag information');
-        }
+    return octokit.pulls
+        .listCommits({
+            repo: context.repo.repo,
+            owner: context.repo.owner,
+            pull_number: context.payload.pull_request.number
+        })
+        .then(({ data: commits }) => Promise.all([
+            getRecommandation(commits.map(commit => commit.sha)),
+            getLastTag()
+        ]))
+        .then(([recommendation, lastTag] = []) => {
+            if (!recommendation || !lastTag) {
+                throw new Error('Unable to retrieve commits and tag information');
+            }
 
-        let lastVersion;
-        let version;
-        if (lastTag && recommendation) {
-            const lastVersionObject = semverParse(lastTag);
-            lastVersion = lastVersionObject.version;
-            version = semverInc(lastVersionObject, recommendation.releaseType);
-            core.setOutput('version', version);
-        }
+            let lastVersion;
+            let version;
+            if (lastTag && recommendation) {
+                const lastVersionObject = semverParse(lastTag);
+                lastVersion = lastVersionObject.version;
+                version = semverInc(lastVersionObject, recommendation.releaseType);
+                core.setOutput('version', version);
+            }
 
-        core.info(JSON.stringify(recommendation, null, ' '));
+            core.info(JSON.stringify(recommendation, null, ' '));
 
-        if (
-            recommendation.stats &&
-            recommendation.stats.commits > 0 &&
-            recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
-        ) {
-            return postComment(
-                octokit,
-                context,
-                '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
-            ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
-        }
-        return postComment(octokit, context, getMessage(recommendation, lastVersion, version));
-    });
+            if (
+                recommendation.stats &&
+                recommendation.stats.commits > 0 &&
+                recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
+            ) {
+                return postComment(
+                    octokit,
+                    context,
+                    '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
+                ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
+            }
+            return postComment(octokit, context, getMessage(recommendation, lastVersion, version));
+        });
 }
 
 /**
  * Get commit recommendation
+ * @param {String[]]} includeCommits - the list of commits to include
  * @returns {Promise<Object>} resolves with the recommendation object
  */
-function getRecommandation() {
+function getRecommandation(includeCommits) {
     return new Promise((resolve, reject) => {
         conventionalRecommendedBump(
             {
                 //the preset cannot be used from string in an action due to missing lookups in node_modules
-                config: conventionalPresetConfig
+                config: conventionalPresetConfig,
+                whatBump(commits) {
+                    return presetBumper().whatBump(commits.filter( commit => includeCommits.includes(commit.hash)));
+                }
             },
-            {},
             (err, recommendation) => {
                 if (err) {
                     return reject(err);
@@ -184,8 +198,8 @@ function postComment(octokit, context, comment) {
                 owner: context.repo.owner,
                 issue_number: context.payload.pull_request.number,
                 body: `${commentHeader}\n${comment}`
-            })
-        ));
+            }))
+        );
 }
 
 main().catch(err => core.setFailed(err.message));
