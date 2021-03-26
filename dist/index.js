@@ -40,14 +40,19 @@ function main() {
     const context = github.context;
     const octokit = github.getOctokit(token);
 
-    console.log(context);
+    console.log(context.payload.pull_request);
 
-    return octokit.commits.
-        listCommits({
+    return octokit.paginate(octokit.repos.
+        listCommits,{
             repo: context.repo.repo,
             owner: context.repo.owner,
-            sha: context.sha,
-            per_page: 100,
+            sha: context.payload.pull_request.sha
+        })
+        .then(commits => {
+            console.log('------------COMMITS-------');
+            console.log(commits.length);
+            console.log(commits);
+            return commits;
         })
         .then(({ data: commits }) => Promise.all([
             getRecommandation(commits.map(commit => commit.sha)),
