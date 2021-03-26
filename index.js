@@ -133,6 +133,7 @@ function getLastTag() {
  * @param {string} recommendation.reason
  * @param {string} lastVersion
  * @param {string} version
+ * @param {number} [commitNumbers=0]
  * @returns {string} the message, in markdown format
  */
 function getMessage({ stats, level, reason } = {}, lastVersion, version, commitNumbers = 0) {

@@ -6,6 +6,8 @@ The action will :
  - Fail pull request with no conventional commits
  - Post a comment with the target version number based on pull request commits
 
+Due to a limitation of the Github API the action will analyze maximum 250 commits per pull request. 
+
 ## Inputs
 
 ### `github_token`
