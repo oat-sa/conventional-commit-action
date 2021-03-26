@@ -24,6 +24,9 @@ const gitSemverTags = require('git-semver-tags');
 const semverParse = require('semver/functions/parse');
 const semverInc = require('semver/functions/inc');
 
+//PR stops listing commits after this limit
+const commitNumbersThreshold = 250;
+
 /**
  * The main entry point
  * @returns {Promise}
@@ -33,45 +36,48 @@ function main() {
     const context = github.context;
     const octokit = github.getOctokit(token);
 
-    return octokit.pulls
-        .listCommits({
-            repo: context.repo.repo,
-            owner: context.repo.owner,
-            pull_number: context.payload.pull_request.number
-        })
-        .then(({ data: commits }) => Promise.all([
-            getRecommandation(commits.map(commit => commit.sha)),
-            getLastTag()
-        ]))
-        .then(([recommendation, lastTag] = []) => {
-            if (!recommendation || !lastTag) {
-                throw new Error('Unable to retrieve commits and tag information');
-            }
+    const commitNumbers = context.payload.pull_request.commits;
 
-            let lastVersion;
-            let version;
-            if (lastTag && recommendation) {
-                const lastVersionObject = semverParse(lastTag);
-                lastVersion = lastVersionObject.version;
-                version = semverInc(lastVersionObject, recommendation.releaseType);
-                core.setOutput('version', version);
-            }
+    return octokit.paginate(octokit.pulls.listCommits, {
+        repo: context.repo.repo,
+        owner: context.repo.owner,
+        pull_number: context.payload.pull_request.number,
+        per_page: 100
+    })
+    .then( commits => Promise.all([
+        getRecommandation(commits.map(commit => commit.sha)),
+        getLastTag()
+    ]))
+    .then(([recommendation, lastTag] = []) => {
+        if (!recommendation || !lastTag) {
+            throw new Error('Unable to retrieve commits and tag information');
+        }
 
-            core.info(JSON.stringify(recommendation, null, ' '));
+        let lastVersion;
+        let version;
+        if (lastTag && recommendation) {
+            const lastVersionObject = semverParse(lastTag);
+            lastVersion = lastVersionObject.version;
+            version = semverInc(lastVersionObject, recommendation.releaseType);
+            core.setOutput('version', version);
+        }
 
-            if (
-                recommendation.stats &&
-                recommendation.stats.commits > 0 &&
-                recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
-            ) {
-                return postComment(
-                    octokit,
-                    context,
-                    '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
-                ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
-            }
-            return postComment(octokit, context, getMessage(recommendation, lastVersion, version));
-        });
+        core.info(JSON.stringify(recommendation, null, ' '));
+
+        if (
+            recommendation.stats &&
+            recommendation.stats.commits > 0 &&
+            recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
+        ) {
+            return postComment(
+                octokit,
+                context,
+                '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
+            ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
+        }
+
+        return postComment(octokit, context, getMessage(recommendation, lastVersion, version, commitNumbers));
+    });
 }
 
 /**
@@ -127,12 +133,16 @@ function getLastTag() {
  * @param {string} recommendation.reason
  * @param {string} lastVersion
  * @param {string} version
+ * @param {number} [commitNumbers=0]
  * @returns {string} the message, in markdown format
  */
-function getMessage({ stats, level, reason } = {}, lastVersion, version) {
+function getMessage({ stats, level, reason } = {}, lastVersion, version, commitNumbers = 0) {
     let message = ['### Version'];
+    if(commitNumbers > commitNumbersThreshold) {
+        message.push( `⚠️  The pull request contains ${commitNumbers} commits. This message is based only on the first ${commitNumbersThreshold}.`);
+    }
     if (level === 0) {
-        message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it');
+        message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it.');
     }
     if (stats.unset > 0) {
         message.push(
