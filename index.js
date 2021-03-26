@@ -38,7 +38,7 @@ function main() {
 
     const commitNumbers = context.payload.pull_request.commits;
 
-    return octokit.paginate(octokit.pull_request.listCommits, {
+    return octokit.paginate(octokit.pulls.listCommits, {
         repo: context.repo.repo,
         owner: context.repo.owner,
         pull_number: context.payload.pull_request.number,
