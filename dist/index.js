@@ -31,6 +31,9 @@ const gitSemverTags = __webpack_require__(2408);
 const semverParse = __webpack_require__(5925);
 const semverInc = __webpack_require__(900);
 
+//PR stops listing commits after this limit
+const commitNumbersThreshold = 250;
+
 /**
  * The main entry point
  * @returns {Promise}
@@ -40,27 +43,14 @@ function main() {
     const context = github.context;
     const octokit = github.getOctokit(token);
 
-    //return octokit.paginate(octokit.repos.
-        //listCommits,{
-            //repo: context.repo.repo,
-            //owner: context.repo.owner,
-            //sha: context.payload.pull_request.head.sha
-        //})
-    console.log(context.payload.pull_request);
-    return octokit.repos.listCommits({
-            repo: context.repo.repo,
-            owner: context.repo.owner,
-            sha: context.payload.pull_request.head.refs
-        })
-        .then(commits => {
-            console.log('------------COMMITS-------');
-            console.log(commits.length);
-            console.log(commits[0]);
-            console.log(commits[commits.length-1]);
+    const commitNumbers = context.payload.pull_request.commits;
 
-            console.log('------------COMMITS-------');
-            return commits;
-        })
+    return octokit.paginate(octokit.pull_request.listCommits, {
+        repo: context.repo.repo,
+        owner: context.repo.owner,
+        pull_number: context.payload.pull_request.number,
+        per_page: 100
+    })
         .then(({ data: commits }) => Promise.all([
             getRecommandation(commits.map(commit => commit.sha)),
             getLastTag()
@@ -92,7 +82,8 @@ function main() {
                     '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
                 ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
             }
-            return postComment(octokit, context, getMessage(recommendation, lastVersion, version));
+
+            return postComment(octokit, context, getMessage(recommendation, lastVersion, version, commitNumbers));
         });
 }
 
@@ -151,10 +142,13 @@ function getLastTag() {
  * @param {string} version
  * @returns {string} the message, in markdown format
  */
-function getMessage({ stats, level, reason } = {}, lastVersion, version) {
+function getMessage({ stats, level, reason } = {}, lastVersion, version, commitNumbers = 0) {
     let message = ['### Version'];
+    if(commitNumbers > commitNumbersThreshold) {
+        message.push( `⚠️  The pull request contains ${commitNumbers} commits. This message is based only on the first ${commitNumbersThreshold}.`);
+    }
     if (level === 0) {
-        message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it');
+        message.push('🚨 Your pull request contains a BREAKING CHANGE, please be sure to communicate it.');
     }
     if (stats.unset > 0) {
         message.push(
