@@ -51,40 +51,40 @@ function main() {
         pull_number: context.payload.pull_request.number,
         per_page: 100
     })
-        .then(({ data: commits }) => Promise.all([
-            getRecommandation(commits.map(commit => commit.sha)),
-            getLastTag()
-        ]))
-        .then(([recommendation, lastTag] = []) => {
-            if (!recommendation || !lastTag) {
-                throw new Error('Unable to retrieve commits and tag information');
-            }
+    .then( commits => Promise.all([
+        getRecommandation(commits.map(commit => commit.sha)),
+        getLastTag()
+    ]))
+    .then(([recommendation, lastTag] = []) => {
+        if (!recommendation || !lastTag) {
+            throw new Error('Unable to retrieve commits and tag information');
+        }
 
-            let lastVersion;
-            let version;
-            if (lastTag && recommendation) {
-                const lastVersionObject = semverParse(lastTag);
-                lastVersion = lastVersionObject.version;
-                version = semverInc(lastVersionObject, recommendation.releaseType);
-                core.setOutput('version', version);
-            }
+        let lastVersion;
+        let version;
+        if (lastTag && recommendation) {
+            const lastVersionObject = semverParse(lastTag);
+            lastVersion = lastVersionObject.version;
+            version = semverInc(lastVersionObject, recommendation.releaseType);
+            core.setOutput('version', version);
+        }
 
-            core.info(JSON.stringify(recommendation, null, ' '));
+        core.info(JSON.stringify(recommendation, null, ' '));
 
-            if (
-                recommendation.stats &&
-                recommendation.stats.commits > 0 &&
-                recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
-            ) {
-                return postComment(
-                    octokit,
-                    context,
-                    '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
-                ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
-            }
+        if (
+            recommendation.stats &&
+            recommendation.stats.commits > 0 &&
+            recommendation.stats.unset + recommendation.stats.merge >= recommendation.stats.commits
+        ) {
+            return postComment(
+                octokit,
+                context,
+                '❌ The commits messages are not compliant with the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) format!'
+            ).then(() => Promise.reject(new Error('The commits messages are not compliant')));
+        }
 
-            return postComment(octokit, context, getMessage(recommendation, lastVersion, version, commitNumbers));
-        });
+        return postComment(octokit, context, getMessage(recommendation, lastVersion, version, commitNumbers));
+    });
 }
 
 /**
