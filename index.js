@@ -33,17 +33,23 @@ function main() {
     const context = github.context;
     const octokit = github.getOctokit(token);
 
-    return octokit.paginate(octokit.repos.
-        listCommits,{
+    //return octokit.paginate(octokit.repos.
+        //listCommits,{
+            //repo: context.repo.repo,
+            //owner: context.repo.owner,
+            //sha: context.payload.pull_request.head.sha
+        //})
+    console.log(context.payload.pull_request);
+    return octokit.repos.listCommits({
             repo: context.repo.repo,
             owner: context.repo.owner,
-            sha: context.payload.pull_request.head.sha
+            sha: context.payload.pull_request.head.refs
         })
         .then(commits => {
             console.log('------------COMMITS-------');
             console.log(commits.length);
             console.log(commits[0]);
-            console.log(commits[length-1]);
+            console.log(commits[commits.length-1]);
 
             console.log('------------COMMITS-------');
             return commits;
