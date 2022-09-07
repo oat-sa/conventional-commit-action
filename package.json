@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/oat-sa/conventional-commit-action#readme",
   "dependencies": {
-    "@actions/core": "^1.2.6",
+    "@actions/core": "^1.9.1",
     "@actions/github": "^4.0.0",
     "@oat-sa/conventional-changelog-tao": "^0.2.0",
     "conventional-recommended-bump": "^6.1.0",
