@@ -16,5 +16,8 @@
  * Copyright (c) 2020 (original work) Open Assessment Technologies SA ;
  */
 module.exports = {
-    extends: '@oat-sa/eslint-config-tao/svelte'
+    extends: '@oat-sa/eslint-config-tao/svelte',
+    parserOptions: {
+        requireConfigFile: false
+    }
 };
