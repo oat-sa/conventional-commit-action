@@ -41830,6 +41830,9 @@ function main() {
             if (!recommendation || !lastTag) {
                 throw new Error('Unable to retrieve commits and tag information');
             }
+            if (lastTag.match(/^20\d\d\.\d\d/)) {
+                return;
+            }
 
             let lastVersion;
             let version;

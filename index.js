@@ -50,6 +50,10 @@ function main() {
             if (!recommendation || !lastTag) {
                 throw new Error('Unable to retrieve commits and tag information');
             }
+            if (lastTag.match(/^20\d\d\.\d\d/)) {
+                // YYYY.MM* tagging is not proper semver, and bump shouldn't be proposed
+                return;
+            }
 
             let lastVersion;
             let version;
