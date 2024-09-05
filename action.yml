@@ -9,5 +9,5 @@ outputs:
   version:
     description: 'The version resolved from commits'
 runs:
-  using: 'node18'
+  using: 'node20'
   main: 'dist/index.js'
